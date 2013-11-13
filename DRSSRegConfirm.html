@@ -1,15 +1,16 @@
 <html>
 	<head>
-		<meta charset="utf-8"/>
+		<meta charset="UTF-8"/>
 		<script src="DRSSRegConfirm.js"></script>
 	</head>
 	<body background="background.png">
 		<h3 align="center">Печать справки по регистрации ЗО в ДРСС</h3>
-		<table width="400px" border="0" cellpadding="2px" cellspacing="2px">
+		<table width="650px" border="0" cellpadding="1px" cellspacing="1px" id="zoTable">
 			<tr>
-				<td>Введите ид. код ЗО:</td>
-				<td><input type="text" size="10" maxlength="10" pattern="[0-9]{10}"></td>
-				<td><input type="button" value="Распечатать" id="start"></td>
+				<td>Введите код ЗО и Ф.И.О:</td>
+				<td><input type="text" size="10" maxlength="10" pattern="[0-9]{10}" id="idInput"></td>
+				<td><input type="text" size="40" maxlength="60" id="FIOInput"</td>
+				<td><input type="button" value="Добавить" id="addButton"></td>
 			</tr>
 		</table>
 	</body>

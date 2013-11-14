@@ -6,26 +6,53 @@
 /**
  * Registering start app point on DRSSRegConfirm.html
  */
-document.addEventListener('DOMContentLoaded', main);
+document.addEventListener("DOMContentLoaded", main);
  
 /**
  * Main start application point
  */
 function main() {
-	document.querySelector('#addButton').addEventListener('click', addToZoTable);
+	document.querySelector("#mainForm").addEventListener("submit", addToZoTable);
+	displayPrintTable();
 } 
 
 /**
  * Add new people into printing table
+ * Data adds to localStorage
  */
 function addToZoTable() {
-	var idCode = document.querySelector('#IdInput').value;
-	var fio = document.querySelector('#FIOInput').value;
+	var idCode = trim(document.querySelector("#IdInput").value);
+	var fio = trim(document.querySelector("#FIOInput").value);
+	var printQueueList = localStorage.getItem("printQueueList");
 	
-	if (trim(idCode == "") || trim(fio == "")) {
-		alert("Пустые значения недопустимы!");
-		return;
+	if (!(String(idCode).match(/[0-9]{10}/) || String(idCode).match(/.+\s.+\s.+/))) return;
+	printQueueList += idCode + ";" + fio + "|";
+	localStorage.setItem("printQueueList", printQueueList);
+	return true;
+}
+
+/**
+ * Delete record from table by icon X
+ */
+function rmFromZoTable() {
+
+	return false;
+}
+
+function displayPrintTable() {
+	var zoTable = document.querySelector("#zoTable");
+	var printQueueList = localStorage.getItem("printQueueList");
+	
+	if (printQueueList == null) return;
+	var printQueueRows = printQueueList.split("|");
+	for (var i = 0; i < printQueueRows.length-1; i++) {
+		var tr = document.createElement("tr"); tr.id = "tr_data"
+		var td = printQueueRows[i].split(";");
+		tr.innerHTML = "<td>" + td[0] + "</td><td> " + td[1] +
+			"</td><td><img src=\"delete.png\"></img></td>"
+		zoTable.appendChild(tr);
 	}
+	return true;
 }
  
 /**
@@ -39,8 +66,5 @@ function notificate(title, message) {
  * Delete spaces from string
  */
 function trim(str) { 
-	str += " ";
-	str = str.replace(/^\ /, '');
-	str = str.replace(/\ $/, '');
-	return str;
+	return String(str).replace(/^\s+|\s+$/g, '');
 }

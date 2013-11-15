@@ -11,16 +11,17 @@
 				<th>Код ЗО</th><th>Ф.И.О</th>
 			</tr>
 			<tr>
-				<td><input type="text" size="10" maxlength="10" pattern="[0-9]{10}" id="IdInput"></td>
+				<td><input type="text" size="12" maxlength="10" pattern="[0-9]{10}" id="IdInput"></td>
 				<td><input type="text" size="60" maxlength="60" pattern=".+\s.+\s.+" id="FIOInput"></td>
 				<td><input type="button" value="Добавить" id="addButton" style="float: right;"></td>
 			</tr>
 		</table>
 		<br>
-		<input type="button" value="Печать!" id="printButton" size="10" style="float: left;">
-		<br>
-		<p style="font-size: 8pt;">Андрюнин Дмитрий
-			<a style="float: right;" href="mailto:bogoduh@kharkov1.kharkov.pfu.gov">bogoduh@kharkov1.kharkov.pfu.gov</a>
-		</p>
+		<input type="image" title="Начать печать!" src="print.png" id="printButton" style="float: left;">
+		<div id="info" style="display: inline-block; width: 100%;">
+			<span id="ver" style="font-size: 8pt; float: right; diplay: block;">ERROR: INITIALIZATION FAIL :(</span><br>
+			<span style="font-size: 8pt; float: left;">Разработка: Андрюнин Дмитрий</span>
+			<a style="float: right; font-size: 8pt;" href="mailto:bogoduh@kharkov1.kharkov.pfu.gov">bogoduh@kharkov1.kharkov.pfu.gov</a>
+		</div>
 	</body>
 </html>

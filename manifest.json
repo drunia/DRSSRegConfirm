@@ -3,7 +3,11 @@
 	"name" : "Печать справки по регистрации ЗО в ДРСС",
 	"description" : "Ускоряет процесс печати справки на ЗО по его регистрации в ДРСС",
 	"version" : "1.0",
-	"permissions" : [ "http://172.1.4.195:7777/*", "tabs", "notifications" ],
+	"permissions" : [ 
+		"http://172.1.4.195:7777/*",
+		"http://172.1.4.196:7777/*",
+		"tabs", "notifications"
+	],
 	"browser_action" : {
 		"default_title" : "Печать справки по регистрации ЗО в ДРСС",
 		"default_icon"  : "icon.png",
@@ -11,7 +15,10 @@
 	},
 	"content_scripts": [
 		{
-		"matches": ["http://172.1.4.195:7777/*"],
+		"matches": [
+			"http://172.1.4.195:7777/ikis/app/f?p=303*",
+			"http://172.1.4.196:7777/ikis/app/f?p=303*"
+			],
 		"js": ["DRSSRegConfirm.js"]
 		}
 	],

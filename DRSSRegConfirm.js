@@ -12,7 +12,7 @@ if (String(document.location).match(/chrome-extension.+DRSSRegConfirm\.html/) !=
 	document.addEventListener("DOMContentLoaded", initUI);
 } else {
 	//Script loaded from DRSS work page
-	alert("! :" + document.location);
+	alert("Загрузилась страница ДРСС!");
 } 
  
 /**
@@ -35,6 +35,7 @@ function addToZoTable() {
 	var idCode = document.querySelector("#IdInput").value.trim();
 	var fio = document.querySelector("#FIOInput").value.trim();
 	var printQueueList = localStorage.getItem("printQueueList");
+	if (printQueueList == null) printQueueList = "";
 	if (!(String(idCode).match(/[0-9]{10}/) &&
 		  String(fio).match(/.+\s.+\s.+/))) {
 		alert("Одно из полей заполнено не верно!\n\n" + 
@@ -43,7 +44,7 @@ function addToZoTable() {
 		return false;
 	}
 	//Check if zo already exists
-	if (printQueueList.match(idCode, "g")) {
+	if (printQueueList != "" && printQueueList.match(idCode, "g")) {
 		alert("Запись по:\n" + idCode + " " + fio + " уже существует!");
 		return false;
 	}

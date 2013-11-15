@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 	<head>
 		<meta charset="UTF-8"/>
@@ -5,19 +6,21 @@
 	</head>
 	<body background="background.png">
 		<h3 align="center">Печать справки по регистрации ЗО в ДРСС</h3>
-		<form autocomplete="on" action="DRSSRegConfirm.html" id="mainForm">
-			<table width="400px" border="0" cellpadding="1px" cellspacing="1px" id="zoTable">
-				<tr>
-					<th>Код ЗО</th> 
-					<th>Ф.И.О</th>
-				</tr>
-				<tr>
-					<td><input type="text" size="10" maxlength="10" pattern="[0-9]{10}" id="idInput"></td>
-					<td><input type="text" size="60" maxlength="60" pattern=".+\s.+\s.+" id="FIOInput"></td>
-					<td><input type="submit" value="Добавить" style="width: 75px"></td>
-				</tr>
-			</table>
-			<input type="button" value="Печать!" id="printButton" size="10" style="float: right; width: 75px">
-		</form>
+		<table border="0" cellpadding="1px" cellspacing="1px" id="zoTable">
+			<tr>
+				<th>Код ЗО</th><th>Ф.И.О</th>
+			</tr>
+			<tr>
+				<td><input type="text" size="10" maxlength="10" pattern="[0-9]{10}" id="IdInput"></td>
+				<td><input type="text" size="60" maxlength="60" pattern=".+\s.+\s.+" id="FIOInput"></td>
+				<td><input type="button" value="Добавить" id="addButton" style="float: right;"></td>
+			</tr>
+		</table>
+		<br>
+		<input type="button" value="Печать!" id="printButton" size="10" style="float: left;">
+		<br>
+		<p style="font-size: 8pt;">Андрюнин Дмитрий
+			<a style="float: right;" href="mailto:bogoduh@kharkov1.kharkov.pfu.gov">bogoduh@kharkov1.kharkov.pfu.gov</a>
+		</p>
 	</body>
 </html>

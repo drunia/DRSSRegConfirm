@@ -180,9 +180,9 @@ function displayPrintTable() {
 			//Get status
 			var printButton = document.querySelector("#printButton");
 			if ((printQueueRows.length - 1) > 0) 
-				printButton.style.display = "block";
+				printButton.setAttribute("style", "display: block");
 			else 
-				printButton.style.display = "none";
+				printButton.setAttribute("style", "display: none");
 			chrome.storage.local.get(
 				function (storage) {
 					var status = storage.status;

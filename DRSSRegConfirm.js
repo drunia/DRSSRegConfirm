@@ -1,6 +1,6 @@
 /**
  * Main script file DRSSRegConfirm
- * Andrunin Dmitry, drunia@xakep.ru, bogoduh@kharkov1.kharkov.pfu.gov
+ * Author: Andrunin Dmitry, drunia@xakep.ru, bogoduh@kharkov1.kharkov.pfu.gov
  */
 
 var VER = "Версия 1.0.0";
@@ -179,6 +179,10 @@ function displayPrintTable() {
 				rmButtons[i].onclick = removeFromZoTable;
 			//Get status
 			var printButton = document.querySelector("#printButton");
+			if ((printQueueRows.length - 1) > 0) 
+				printButton.style.display = "block";
+			else 
+				printButton.style.display = "none";
 			chrome.storage.local.get(
 				function (storage) {
 					var status = storage.status;

@@ -2,7 +2,7 @@
 	"manifest_version" : 2,
 	"name" : "Печать справки по регистрации ЗО в ДРСС",
 	"description" : "Ускоряет процесс печати справки на ЗО по его регистрации в ДРСС",
-	"version" : "1.0",
+	"version" : "1.0.0",
 	"permissions" : [ 
 		"http://172.1.4.195:7777/*",
 		"http://172.1.4.196:7777/*",
@@ -12,8 +12,9 @@
 	"browser_action" : {
 		"default_title" : "Печать справки по регистрации ЗО в ДРСС",
 		"default_icon"  : "icon.png",
-		"default_popup" : "DRSSRegConfirm.html" 
+		"default_popup" : "DRSSRegConfirm.html"
 	},
+	"options_page": "settings.html",
 	"content_scripts": [
 		{
 		"matches": [
@@ -28,6 +29,7 @@
 		"DRSSRegConfirm.js"
 	],
 	"homepage_url": "http://vk.com/drunia85",
+	"short_name": "Посетить страницу автора на vk.vom",
 	"icons" : { "128" : "icon.png" },
 	"content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
 }

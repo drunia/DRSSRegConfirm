@@ -4,7 +4,7 @@
  */
 
 var VER = "Версия 1.0.0";
-var DRSS_URL = "http://vk.com";
+var DRSS_URL = "http://172.1.4.195:7777/ikis/app/f?p=303";
 var WORK_STATUS = { PRINTING: 1, READY: 2, ERROR: 3 };
 var zoTable;
 var lastProgressState;
@@ -23,21 +23,29 @@ if (String(document.location).match(/chrome-extension.+DRSSRegConfirm\.html/) !=
  */
 function workOnDRSS() {
 	console.log("DRSSRegConfirm " + VER + " started.");
-	console.log("DRSSRegConfirm: Loggining...");
-	
-	var
-	
-	chrome.tabs.getCurrent (
-			function (tab) {
-				chrome.tabs.onRemoved(
-					function (tabId) {
-						if (tab.id == tabId) {
-							alert("Нашу вкладку закрывают ((");
-						}
-					}
-				);
-			}
+	chrome.storage.local.get(
+		function (storage) {
+			var printQueueList = storage.printQueueList;
+			var status = storage.status;
+			console.log("Requests in queue: " + (printQueueList.split(";").length - 1));
+			console.log("Status: " + ["UFO", "PRINTING", "READY", "ERROR"][status]);
+			
+			DRSSLogin() ;
+		}
 	);
+}
+
+/**
+ * Login to DRSS 
+ */
+function DRSSLogin() {
+	var login = document.querySelector("#P111_USERNAME");
+	var passw = document.querySelector("#P111_PASSWORD");
+	var loginButton = document.querySelector('a.t20Button');
+	
+	login.value = "u20045-drunia";
+	passw.value = "pass1032";
+	loginButton.click();
 }
  
 /**
@@ -52,6 +60,8 @@ function initUI() {
 	chrome.storage.local.get(
 		function(storage) {
 			//alert(storage.printQueueList);
+			if (storage.printQueueList == null)
+				chrome.storage.local.set({printQueueList: ""});
 			lastProgressState = storage.printQueueList.length;
 			displayPrintTable();
 			setInterval(updateUI, 1000);

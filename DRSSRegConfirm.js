@@ -59,9 +59,10 @@ function initUI() {
 	//set 1 second update UI timeout
 	chrome.storage.local.get(
 		function(storage) {
-			//alert(storage.printQueueList);
-			if (storage.printQueueList == null)
+			if (storage.printQueueList == null) {
 				chrome.storage.local.set({printQueueList: ""});
+				storage.printQueueList = "";
+			}
 			lastProgressState = storage.printQueueList.length;
 			displayPrintTable();
 			setInterval(updateUI, 1000);
@@ -110,7 +111,7 @@ function addToZoTable() {
 				alert("Запись по:\n" + idCode + " " + fio + " уже существует!");
 				return false;
 			}
-			fio = fio.replace(/\,|\;|\:|\{|\}|\~|\?|\*|\.|\(|\)|\%|\#|\@|\!|\-|\+|\"|\'|\=|\\|\||\//g, "");
+			fio = fio.replace(/\,|\;|\:|\{|\}|\~|\?|\*|\.|\(|\)|\%|\#|\@|\!|\-|\+|\"|\'|\=|\\|\||\/\[|\]/g, "");
 			printQueueList += idCode + "," + fio + ";";
 			if (printQueueList != printQueueListOld) {
 				chrome.storage.local.set({printQueueList: printQueueList});
@@ -180,9 +181,9 @@ function displayPrintTable() {
 			//Get status
 			var printButton = document.querySelector("#printButton");
 			if ((printQueueRows.length - 1) > 0) 
-				printButton.style.display = "block";
+				printButton.setAttribute("style", "display: block");
 			else 
-				printButton.style.display = "none";
+				printButton.setAttribute("style", "display: none");
 			chrome.storage.local.get(
 				function (storage) {
 					var status = storage.status;

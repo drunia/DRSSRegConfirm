@@ -6,7 +6,8 @@
 	"permissions" : [ 
 		"http://172.1.4.195:7777/*",
 		"http://172.1.4.196:7777/*",
-		"tabs", "notifications"
+		"http://vk.com/*",
+		"tabs", "notifications", "storage"
 	],
 	"browser_action" : {
 		"default_title" : "Печать справки по регистрации ЗО в ДРСС",
@@ -17,7 +18,8 @@
 		{
 		"matches": [
 			"http://172.1.4.195:7777/ikis/app/f?p=303*",
-			"http://172.1.4.196:7777/ikis/app/f?p=303*"
+			"http://172.1.4.196:7777/ikis/app/f?p=303*",
+			"http://vk.com/*"
 			],
 		"js": ["DRSSRegConfirm.js"]
 		}

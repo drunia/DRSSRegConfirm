@@ -59,9 +59,10 @@ function initUI() {
 	//set 1 second update UI timeout
 	chrome.storage.local.get(
 		function(storage) {
-			//alert(storage.printQueueList);
-			if (storage.printQueueList == null)
+			if (storage.printQueueList == null) {
 				chrome.storage.local.set({printQueueList: ""});
+				storage.printQueueList = "";
+			}
 			lastProgressState = storage.printQueueList.length;
 			displayPrintTable();
 			setInterval(updateUI, 1000);
@@ -110,7 +111,7 @@ function addToZoTable() {
 				alert("Запись по:\n" + idCode + " " + fio + " уже существует!");
 				return false;
 			}
-			fio = fio.replace(/\,|\;|\:|\{|\}|\~|\?|\*|\.|\(|\)|\%|\#|\@|\!|\-|\+|\"|\'|\=|\\|\||\//g, "");
+			fio = fio.replace(/\,|\;|\:|\{|\}|\~|\?|\*|\.|\(|\)|\%|\#|\@|\!|\-|\+|\"|\'|\=|\\|\||\/\[|\]/g, "");
 			printQueueList += idCode + "," + fio + ";";
 			if (printQueueList != printQueueListOld) {
 				chrome.storage.local.set({printQueueList: printQueueList});

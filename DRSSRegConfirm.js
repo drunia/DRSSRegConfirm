@@ -181,21 +181,16 @@ function displayPrintTable() {
 			//Get status
 			var printButton = document.querySelector("#printButton");
 			if ((printQueueRows.length - 1) > 0) 
-				printButton.setAttribute("style", "display: block");
+				printButton.setAttribute("style", "display: inline-block");
 			else 
 				printButton.setAttribute("style", "display: none");
-			chrome.storage.local.get(
-				function (storage) {
-					var status = storage.status;
-					if (status == WORK_STATUS.PRINTING) {
-						printButton.src = "stop.png";
-						printButton.title = "Остановить печать";
-					} else {
-						printButton.src = "print.png";
-						printButton.title = "Начать печать";
-					}
-				}
-			);
+			if (storage.status == WORK_STATUS.PRINTING) {
+					printButton.src = "stop.png";
+					printButton.title = "Остановить печать";
+			} else {
+					printButton.src = "print.png";
+					printButton.title = "Начать печать";
+			}
 		}
 	);
 	return true;
@@ -215,7 +210,13 @@ function printAll() {
 				printButton.title = "Остановить печать";
 				//Open new tab for work with DRSS
 				chrome.tabs.getAllInWindow(function(tabs){
-					chrome.tabs.create({ index: tabs.length + 1, url: DRSS_URL, active: false});
+					chrome.tabs.create({ index: tabs.length + 1, url: DRSS_URL, active: false}, 
+						function (tab) {
+							//Get background for registering close tab event
+							var background = chrome.extension.getBackgroundPage();
+							background.registerDRSSTabCloseEvent(tab.id);
+						}
+					);
 				});
 				return true;
 			}

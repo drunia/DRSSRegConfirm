@@ -14,6 +14,9 @@
 		"default_icon"  : "icon.png",
 		"default_popup" : "DRSSRegConfirm.html"
 	},
+	"background": {
+		"scripts": ["background.js"]
+	},
 	"options_page": "settings.html",
 	"content_scripts": [
 		{
@@ -29,7 +32,6 @@
 		"DRSSRegConfirm.js"
 	],
 	"homepage_url": "http://vk.com/drunia85",
-	"short_name": "Посетить страницу автора на vk.vom",
 	"icons" : { "128" : "icon.png" },
 	"content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
 }

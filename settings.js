@@ -2,7 +2,8 @@
  * Setings script file of DRSSRegConfirm
  * Author: Andrunin Dmitry, drunia@xakep.ru, bogoduh@kharkov1.kharkov.pfu.gov
  */
-var VER = "Версия 1.0.0";
+var backgrounnd = chrome.extension.getBackgroundPage();
+var VER = backgrounnd.VER;
 var user, pass;
 
 /**
@@ -32,6 +33,12 @@ function saveListener() {
 		user : user.value,
 		pass : pass.value
 	};
-	chrome.storage.local.set(settings);
+	chrome.storage.local.set(settings,
+		function () {
+			if (chrome.runtime.lastError == null) {
+				alert("Настройки записаны успешно.");
+			}
+		}
+	);
 	return true;
 }

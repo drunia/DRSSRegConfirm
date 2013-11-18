@@ -3,9 +3,10 @@
  * Author: Andrunin Dmitry, drunia@xakep.ru, bogoduh@kharkov1.kharkov.pfu.gov
  */
 
-var VER = "Версия 1.0.0";
-var DRSS_URL = "http://172.1.4.195:7777/ikis/app/f?p=303";
-var WORK_STATUS = { PRINTING: 1, READY: 2, ERROR: 3 };
+var background = chrome.extension.getBackgroundPage();
+var VER = background.VER;
+var DRSS_URL	= background.DRSS_URL;
+var WORK_STATUS = background.WORK_STATUS;
 var zoTable;
 var lastProgressState;
 
@@ -212,8 +213,7 @@ function printAll() {
 				chrome.tabs.getAllInWindow(function(tabs){
 					chrome.tabs.create({ index: tabs.length + 1, url: DRSS_URL, active: false}, 
 						function (tab) {
-							//Get background for registering close tab event
-							var background = chrome.extension.getBackgroundPage();
+							//Use background for registering close tab event
 							background.registerDRSSTabCloseEvent(tab.id);
 						}
 					);

@@ -2,7 +2,8 @@
  * Background work script
  * Author: Andrunin Dmitry, drunia@xakep.ru, bogoduh@kharkov1.kharkov.pfu.gov
  */
- 
+var VER = "Версия 1.0.0";
+var DRSS_URL = "http://172.1.4.195:7777/ikis/app/f?p=303";
 var WORK_STATUS = { PRINTING: 1, READY: 2, ERROR: 3 };
 
 /**

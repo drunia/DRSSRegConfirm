@@ -8,13 +8,19 @@
 		<h3 align="center">Настройки</h3>
 		<table border="0" cellpadding="1px" cellspacing="1px" id="zoTable" style="width: 550px; heigth: 500px;">
 			<tr>
-				<td>Адресс ДРСС:</td><td><input type="url" id="address" maxsize="100" size="50"></td>
+				<td>Сервер:</td>
+				<td>
+					<select id="server">
+						<option value="0">172.1.4.195</option>
+						<option value="1">172.1.4.196</option>
+					</select>
+				</td>
 			</tr>
 			<tr>
-				<td>Пользователь:</td><td><input type="text" id="user" maxsize="100" size="50"></td>
+				<td>Пользователь:</td><td><input type="text" id="user" maxsize="50" size="30"></td>
 			</tr>
 			<tr>
-				<td>Пароль:</td><td><input type="password" id="pass" maxsize="100" size="50"></td>
+				<td>Пароль:</td><td><input type="password" id="pass" maxsize="50" size="30"></td>
 			</tr>
 		</table>
 		<input type="image" style="float: right;" src="save.png" id="saveButton" title="Записать настройки">

@@ -4,17 +4,19 @@
  */
 var backgrounnd = chrome.extension.getBackgroundPage();
 var VER = backgrounnd.VER;
-var user, pass;
+var server, user, pass;
 
 /**
  * Init setting
  */
 try {
 	document.querySelector("#ver").innerHTML = VER;
+	server = document.querySelector("#server");
 	user = document.querySelector("#user");
 	pass = document.querySelector("#pass");
 	chrome.storage.local.get(
 		function (storage) {
+			if (storage.server != null) server.selectedIndex = storage.server;
 			if (storage.user != null) user.value = storage.user;
 			if (storage.pass != null) pass.value = storage.pass;
 		}
@@ -30,6 +32,7 @@ try {
  */
 function saveListener() {
 	var settings = {
+		server : server.selectedIndex,
 		user : user.value,
 		pass : pass.value
 	};

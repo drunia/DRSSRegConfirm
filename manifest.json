@@ -24,11 +24,11 @@
 			"http://172.1.4.195:7777/ikis/app/f?p=303*",
 			"http://172.1.4.196:7777/ikis/app/f?p=303*"
 			],
-			"js": ["DRSSRegConfirm.js"]
+			"js": ["DRSSParser.js"]
 		}
 	],
 	"web_accessible_resources": [
-		"DRSSRegConfirm.js"
+		"DRSSParser.js"
 	],
 	"homepage_url": "http://vk.com/drunia85",
 	"icons" : { "128" : "icon.png" },

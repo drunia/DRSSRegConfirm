@@ -10,45 +10,11 @@ var WORK_STATUS = background.WORK_STATUS;
 var zoTable;
 var lastProgressState;
 
-//Verify where from script loaded
-if (String(document.location).match(/chrome-extension.+DRSSRegConfirm\.html/) != null) {
-	//Script loaded from browserAction icon 
-	document.addEventListener("DOMContentLoaded", initUI);
-} else {
-	//Script loaded from DRSS work page
-	workOnDRSS();
-} 
-
-/** 
- * Main method to working with DRSS
- */
-function workOnDRSS() {
-	console.log("DRSSRegConfirm " + VER + " started.");
-	chrome.storage.local.get(
-		function (storage) {
-			var printQueueList = storage.printQueueList;
-			var status = storage.status;
-			console.log("Requests in queue: " + (printQueueList.split(";").length - 1));
-			console.log("Status: " + ["UFO", "PRINTING", "READY", "ERROR"][status]);
-			
-			DRSSLogin() ;
-		}
-	);
-}
-
 /**
- * Login to DRSS 
+ * Init point 
  */
-function DRSSLogin() {
-	var login = document.querySelector("#P111_USERNAME");
-	var passw = document.querySelector("#P111_PASSWORD");
-	var loginButton = document.querySelector('a.t20Button');
-	
-	login.value = "u20045-drunia";
-	passw.value = "pass1032";
-	loginButton.click();
-}
- 
+document.addEventListener("DOMContentLoaded", initUI);
+
 /**
  * browserAction load script initiative
  */
@@ -211,10 +177,14 @@ function printAll() {
 				printButton.title = "Остановить печать";
 				//Open new tab for work with DRSS
 				chrome.tabs.getAllInWindow(function(tabs){
-					chrome.tabs.create({ index: tabs.length + 1, url: DRSS_URL, active: false}, 
+					chrome.tabs.create({
+						index: tabs.length + 1,
+						url: DRSS_URL[storage.server],
+						active: false
+						}, 
 						function (tab) {
-							//Use background for registering close tab event
-							background.registerDRSSTabCloseEvent(tab.id);
+							//Use background for registering close|open tab event
+							background.registerDRSSTabEvents(tab.id);
 						}
 					);
 				});
@@ -224,6 +194,9 @@ function printAll() {
 				chrome.storage.local.set({status: WORK_STATUS.READY});
 				printButton.src = "print.png";
 				printButton.title = "Начать печать";
+				//Try close DRSS parse tab, if oppened
+				if (background.parsedTabId != null)
+					chrome.tabs.remove(background.parsedTabId);
 			}
 		}
 	);

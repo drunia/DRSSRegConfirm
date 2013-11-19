@@ -8,10 +8,11 @@ var DRSS_URL = [
 	"http://172.1.4.196:7777/ikis/app/f?p=303"
 	];
 var WORK_STATUS = { PRINTING: 1, READY: 2, ERROR: 3 };
+var MESSAGES = { CLOSE_TAB: 10 };
 var parsedTabId = null;
 
 /**
- * All code place her
+ * Start point
  */
 try {
 	/**
@@ -36,32 +37,16 @@ try {
 	 */
 	chrome.runtime.onMessage.addListener(
 		function (message, sender, sendResponce) {
-			if (message.print != null) {
-				sendResponce( {text: "printed OK."} );
-				//message for printing data
-				alert("Printing: " + message.id + " " + message.fio + " register: " + message.isRegister);
-				chrome.storage.local.get(
-					function(storage) {
-						var printQueue = storage.printQueueList;
-						var printQueueList = printQueue.split(";");
-						for (var i = 0; i < printQueueList.length-1; i++) {
-							var id = printQueueList[i].split(",")[0];
-							if (message.id == id) {
-								printQueue = printQueue.replace(printQueueList[i] + ";", "");
-								chrome.storage.local.set(
-									{printQueueList: printQueue},
-									updateStatusIcon
-								);
-							}
-						}		
-					}
-				);
+			if (message.text == MESSAGES.CLOSE_TAB) {
+				chrome.tabs.remove(parsedTabId);
 			}
+			sendResponce( {text: "OK."} );
 		}
 	)
 	 
 } catch (e) {
 	alert("Произошла ошибка при инициализации расширения:\n" + e);
+	return false;
 }
 
 /**
@@ -83,7 +68,7 @@ function updateStatusIcon() {
 }
 	 
 /**
- * Register chrome.tab [open|close] listeners for DRSS tab
+ * Register chrome.tab [open | close] listeners for DRSS tab
  */
 function registerDRSSTabEvents(tabId) {
 	parsedTabId = tabId;
@@ -101,6 +86,7 @@ function registerDRSSTabEvents(tabId) {
 		function (id, updateInfo) {
 			if (tabId == id) {
 				if (updateInfo.status == "complete") {
+					//injecting DRSS parse script into page
 					chrome.tabs.executeScript(
 						tabId, {file: "DRSSParser.js"}
 					);

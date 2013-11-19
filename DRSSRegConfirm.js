@@ -151,8 +151,12 @@ function displayPrintTable() {
 			var printButton = document.querySelector("#printButton");
 			if ((printQueueRows.length - 1) > 0) 
 				printButton.setAttribute("style", "display: inline-block");
-			else 
+			else {
 				printButton.setAttribute("style", "display: none");
+				//Try close DRSS parse tab, if oppened
+				if (background.parsedTabId != null)
+					chrome.tabs.remove(background.parsedTabId);
+			}
 			if (storage.status == WORK_STATUS.PRINTING) {
 					printButton.src = "stop.png";
 					printButton.title = "Остановить печать";

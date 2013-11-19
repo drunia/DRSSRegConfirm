@@ -4,7 +4,7 @@
  */
 var backgrounnd = chrome.extension.getBackgroundPage();
 var VER = backgrounnd.VER;
-var server, user, pass, boss, number, region;
+var server, user, pass, boss, number, region, operator;
 
 /**
  * Init setting
@@ -17,6 +17,7 @@ try {
 	number = document.querySelector("#number");
 	region = document.querySelector("#region");
 	boss = document.querySelector("#boss");
+	operator = document.querySelector("#operator");
 	chrome.storage.local.get(
 		function (storage) {
 			if (storage.server != null) server.selectedIndex = storage.server;
@@ -25,6 +26,7 @@ try {
 			if (storage.boss != null) boss.value = storage.boss;
 			if (storage.region != null) region.value = storage.region;
 			if (storage.number != null) number.value = storage.number;
+			if (storage.operator != null) operator.value = storage.operator;
 		}
 	);
 	//add listener to save button
@@ -43,7 +45,8 @@ function saveListener() {
 		number: number.value,
 		user: user.value,
 		pass: pass.value,
-		region: region.value
+		region: region.value,
+		operator: operator.value
 	};
 	chrome.storage.local.set(settings,
 		function () {

@@ -6,7 +6,6 @@
 	"permissions" : [ 
 		"http://172.1.4.195:7777/*",
 		"http://172.1.4.196:7777/*",
-		"http://vk.com/*",
 		"tabs", "notifications", "storage"
 	],
 	"browser_action" : {
@@ -18,15 +17,6 @@
 		"scripts": ["background.js"]
 	},
 	"options_page": "settings.html",
-	"content_scripts": [
-		{
-		"matches": [
-			"http://172.1.4.195:7777/ikis/app/f?p=303*",
-			"http://172.1.4.196:7777/ikis/app/f?p=303*"
-			],
-			"js": ["DRSSParser.js"]
-		}
-	],
 	"web_accessible_resources": [
 		"DRSSParser.js"
 	],

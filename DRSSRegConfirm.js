@@ -5,7 +5,7 @@
 
 var background = chrome.extension.getBackgroundPage();
 var VER = background.VER;
-var DRSS_URL	= background.DRSS_URL;
+var DRSS_URL = background.DRSS_URL;
 var WORK_STATUS = background.WORK_STATUS;
 var zoTable;
 var lastProgressState;
@@ -139,8 +139,10 @@ function displayPrintTable() {
 			}
 			if (printQueueRows.length > 1) 
 				chrome.browserAction.setBadgeText({ text: String(printQueueRows.length - 1) });
-			else 
+			else {
 				chrome.browserAction.setBadgeText({ text: "" });
+				chrome.storage.local.set({status: WORK_STATUS.READY});
+			}
 			//Add click handlers to removeButton
 			var rmButtons = document.querySelectorAll("#removeButton");
 			for (var i = 0; i < rmButtons.length; i++) 
@@ -170,6 +172,10 @@ function printAll() {
 	chrome.storage.local.get(
 		function (storage) {
 			var status = storage.status;
+			if (storage.user == null || storage.pass == null || storage.server == null) {
+				alert("Настройки не заданы!\nЗайдите в настройки и установите свой логин и пароль ДРСС");
+				return false;
+			}
 			var printButton = document.querySelector("#printButton");
 			if (status == null || status != WORK_STATUS.PRINTING) { 
 				chrome.storage.local.set({status: WORK_STATUS.PRINTING});

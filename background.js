@@ -25,25 +25,63 @@ try {
 			}
 		}
 	);
-
+	
 	/**
-	 * Set pringQueueList count to extension icon
+	 * Set icon status
 	 */
+	updateStatusIcon();
+	
+	/**
+	 * Registering listener for messages from DRSS parser
+	 */
+	chrome.runtime.onMessage.addListener(
+		function (message, sender, sendResponce) {
+			if (message.print != null) {
+				sendResponce( {text: "printed OK."} );
+				//message for printing data
+				alert("Printing: " + message.id + " " + message.fio + " register: " + message.isRegister);
+				chrome.storage.local.get(
+					function(storage) {
+						var printQueue = storage.printQueueList;
+						var printQueueList = printQueue.split(";");
+						for (var i = 0; i < printQueueList.length-1; i++) {
+							var id = printQueueList[i].split(",")[0];
+							if (message.id == id) {
+								printQueue = printQueue.replace(printQueueList[i] + ";", "");
+								chrome.storage.local.set(
+									{printQueueList: printQueue},
+									updateStatusIcon
+								);
+							}
+						}		
+					}
+				);
+			}
+		}
+	)
+	 
+} catch (e) {
+	alert("Произошла ошибка при инициализации расширения:\n" + e);
+}
+
+/**
+ * Set pringQueueList count to extension icon
+ */
+function updateStatusIcon() {
 	 chrome.storage.local.get(
 		function(storage) {
 			if (storage.printQueueList != null) {
 				var printQueueListCount = storage.printQueueList.split(";").length-1;
 				if (printQueueListCount > 0)
 					chrome.browserAction.setBadgeText({ text: String(printQueueListCount) });
+				else
+				  chrome.browserAction.setBadgeText({ text: "" });
 			}
 		}
-	 ); 
-	 
-} catch (e) {
-	alert("Произошла ошибка при инициализации расширения:\n" + e);
+	); 
+	return true;
 }
-
-
+	 
 /**
  * Register chrome.tab [open|close] listeners for DRSS tab
  */
@@ -64,12 +102,7 @@ function registerDRSSTabEvents(tabId) {
 			if (tabId == id) {
 				if (updateInfo.status == "complete") {
 					chrome.tabs.executeScript(
-						tabId, 
-						{code: 
-							"var p = document.createElement('div'); " +
-							"p.id = 'parsing'; p.innerHTML = '&nbspDRSSRegConfirm " + VER + "';" +
-							"document.body.appendChild(p);"
-						}
+						tabId, {file: "DRSSParser.js"}
 					);
 				}
 			}

@@ -8,7 +8,7 @@ var DRSS_URL = [
 	"http://172.1.4.196:7777/ikis/app/f?p=303"
 	];
 var WORK_STATUS = { PRINTING: 1, READY: 2, ERROR: 3 };
-var MESSAGES = { CLOSE_TAB: 10 };
+var MESSAGES = { CLOSE_TAB: 10, UPDATE: 20 };
 var parsedTabId = null;
 
 /**

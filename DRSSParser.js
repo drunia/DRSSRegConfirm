@@ -4,9 +4,12 @@
  */
 
 var WORK_STATUS = { PRINTING: 1, READY: 2, ERROR: 3 };
-var MESSAGES    = { CLOSE_TAB: 10 };
+var MESSAGES = { CLOSE_TAB: 10, UPDATE: 20 };
+var DRSS_URL = [
+	"http://172.1.4.195:7777/ikis/app/f?p=303",
+	"http://172.1.4.196:7777/ikis/app/f?p=303"
+	];
 var currInQueue = null;
-var registered  = null;
 
 /**
  * Parser start her
@@ -18,7 +21,7 @@ var registered  = null;
 				user = storage.user;
 				pass = storage.pass;
 				if (storage.printQueueList.split(";").length-1 == 0) {
-					console.log("DRSS parser: Nothing printed!");
+					console.log("DRSS parser: Nothing DRSSPrinted!");
 					return false;
 				} else { 
 					currInQueue = storage.printQueueList.split(";")[0];
@@ -46,29 +49,68 @@ var registered  = null;
 					case "1":
 						console.log("DRSS parser: Location DRSS Find page, try query by people...");
 						var regInfo = DRSSQueryDataByPeople(storage);
-						if (regInfo != null) print(regInfo, storage);
+						if (regInfo != null) {
+							DRSSPrint(regInfo, storage);
+							DRSSCommit(storage);
+						}
 					break;
-					//p_flow_step_id = 128 - Advanced registration info page
-					case "128":
+					//p_flow_step_id = 120 - Advanced registration info page
+					case "120":
 						console.log("DRSS parser: Location DRSS advanced registration info page, parse...");
 						DRSSEnterToMDZU();
 					break;
-					//p_flow_step_id = 128 - Advanced registration info page [Дані МДЗУ]
+					//p_flow_step_id = 138 - Advanced registration info page [Дані МДЗУ]
 					case "138":
 						console.log("DRSS parser: Location DRSS advanced registration info page [Дані МДЗУ], parse...");
 						var regInfo = DRSSParseRegData();
-						if (regInfo != null) print(regInfo, storage);
+						if (regInfo != null) {
+							DRSSPrint(regInfo, storage);
+							DRSSCommit(storage);
+						}
 					break;
 					default: 
-						console.log("DRSS parser: Unknown location, STOP parse!");
+						console.log("DRSS parser: Unknown location (p_flow_step_id = " + stepId + "), STOP parse!");
 						return false;
+					break;
 				}
-			} else console.log("DRSS parser: Extension DRSSRegConfirm not in status PRINTING..."); 
+			} else console.log("DRSS parser ERROR: Extension DRSSRegConfirm not in status DRSSPrintING..."); 
 		}
 	);
 } catch (e) {
 	alert("Ошибочка вышла!\n" + e);
 	return false;
+}
+
+/** 
+ * Update printQueueList, commit changes
+ */
+function DRSSCommit(storage) {
+	console.log("DRSS parser: All work done, update printQueueList, commit changes...");
+	try {
+		var number = storage.number + 1;
+		var printQueueList = storage.printQueueList.replace(currInQueue + ";", "");
+		var updateStorage = {
+			number: number,
+			printQueueList: printQueueList,
+			status: (printQueueList == "") ? WORK_STATUS.READY : WORK_STATUS.PRINTING
+		};
+		
+		chrome.storage.local.set(updateStorage,
+			function () {
+				if (chrome.runtime.lastError == null) { 
+					location.assign(DRSS_URL[storage.server]);
+					sendMessageToExtension({ text: MESSAGES.CLOSE_TAB });
+				} else {
+					alert("DRSS parser: Ошибка при обновлении chrome.storage.local!");
+					return false;
+				}
+			}
+		);
+	} catch (e) {
+		alert("Ошибочка вышла!\n" + e);
+		return false;
+	}
+	return true;
 }
  
 /**
@@ -124,6 +166,10 @@ function DRSSQueryDataByPeople(storage) {
 	var regInfo = { id: null, fio: null, register: null, regFromTo: null };
 	var idInput = document.querySelector("#P1_NUMID");
 	try {	
+		//prepare "not found" regInfo data
+		regInfo.id  = currInQueue.split(",")[0];
+		regInfo.fio = currInQueue.split(",")[1];
+		regInfo.register = false;
 		if (idInput.value == null || idInput.value.trim() == "") {
 			//step 1
 			console.log("DRSS parser: DRSS query data by people step 1...");
@@ -180,29 +226,24 @@ function DRSSQueryDataByPeople(storage) {
 					if (regDataLink != null) {
 						console.log("DRSS parser: Entering to REGISTER status...");
 						regDataLink.click();
-						registered = true;
 						return null;
 					}
 					if (unRegDataLink != null) {
-						console.log("DRSS parser: Entering to UNREGISTER status...");
+						console.log("DRSS parser: Entering to CLOSED REGISTRATION status...");
 						unRegDataLink.click();
-						registered = false;
 						return null;
 					}		
 				} else {
 					//data found, but status "registered" not found
-					console.log("DRSS parser: Status \"" + statusRegValue + "\" not found!");
-					regInfo.id  = currInQueue.split(",")[0];
-					regInfo.fio = currInQueue.split(",")[1];
-					regInfo.register = false;
+					console.log("DRSS parser: Status \"" + statusRegValue +
+						"\" and \"" + statusUnRegValue + "\" not found!");
+					//data not found
+					console.log("DRSS parser: Registration data not found!");
 					return regInfo;
 				}
 			} else {
 				//data not found
 				console.log("DRSS parser: Registration data not found!");
-				regInfo.id  = currInQueue.split(",")[0];
-				regInfo.fio = currInQueue.split(",")[1];
-				regInfo.register = false;
 				return regInfo;
 			}
 		}
@@ -217,7 +258,7 @@ function DRSSQueryDataByPeople(storage) {
  * Entering to MDZU tab
  */
 function DRSSEnterToMDZU() {
-	var links = document.querySelector("a");
+	var links = document.querySelectorAll("a");
 	var MDZUDataTitle = "Дані МДЗУ";
 	var MDZUDataLink = null;
 	try {
@@ -241,30 +282,47 @@ function DRSSEnterToMDZU() {
 }
 
 /**
+ * Entering to old PFU data tab
+ */
+function DRSSEnterToPfu() {
+
+}
+
+/**
  * Parsing registration data on page
  * Returned regInfo object
  */
 function DRSSParseRegData() {
 	var regInfo = { id: null, fio: null, register: null, regFromTo: null };
 	var regFromInput = document.querySelector("#P138_IM_DT_PSV");
-	var regToInput = document.querySelector("P138_IAB_STOP_DT");
-	if (regFromInput == null) {
-		alert("Ошибочка вышла!\DRSSParseRegData(): regFrom data not found!");
+	var regToInput = document.querySelector("#P138_IAB_STOP_DT");
+	try {
+		if (regFromInput != null && regFromInput.value.trim() == "") {
+			alert("Ошибочка вышла!\DRSSParseRegData(): regFrom data not found!");
+			return null;
+		}
+		if (regToInput != null && regToInput.value.trim() == "") {
+			console.log("DRSS parser: DRSSParseRegData(): regTo data not found!");
+			var d = new Date();
+			var dateStr = d.getDate() + "." + d.getMonth() + "." + d.getFullYear();
+			regToInput.value = dateStr;
+		}
+		regInfo.id  = currInQueue.split(",")[0];
+		regInfo.fio = currInQueue.split(",")[1];
+		regInfo.register = true;
+		regInfo.regFromTo = regFromInput.value + ";" + regToInput.value;
+	} catch (e) {
+		alert("Ошибочка вышла!\DRSSParseRegData(): " + e);
 		return null;
 	}
-	if (regToInput == null)
-		console.log("DRSS parser: DRSSParseRegData(): regTo data not found!");
-	regInfo.id  = currInQueue.split(",")[0];
-	regInfo.fio = currInQueue.split(",")[1];
-	regInfo.register = registered;
-	regInfo.regFromTo = regFromInput.value + ";" + regToInput.value;
 	return regInfo;
 }
 
 /**
  * Print in existig tab
  */
-function print(regInfo, storage) {
+function DRSSPrint(regInfo, storage) {
+	console.log("DRSS parser: DRSSPrint(): regInfo = " + JSON.stringify(regInfo));
 	var isRegisterStr = (regInfo.register) ? "зареєстрований" : "не зареєстрований";
 	var regFromToStr  = (regInfo.register) ? regInfo.regFromTo : "";
 	var d = new Date();
@@ -277,18 +335,19 @@ function print(regInfo, storage) {
 	document.write(
 		"Управлiння Пенсiйного фонду в " + storage.region.replace("ий", "ому") + " районі м. Харькова/Харькiвської областi " +
 		"повідомляє, що згідно данних Державного реєстру страхувальників Державного реєстру соціального " +
-		"страхування (РС ДРСС) гр. " + regInfo.fio + ", ідентифікаційний код  " + regInfo.id + " <b> " + isRegisterStr +
-		"</b> як суб'єкт підприємницької діяльності. " + regFromToStr + "<br><br>Інформація надається станом на " + dateStr + "<br><br>"
+		"страхування (РС ДРСС) гр. <b style='text-decoration:underline'>" + regInfo.fio + "</b>, ідентифікаційний код  " +
+		regInfo.id + " <b> " + isRegisterStr + "</b> як суб'єкт підприємницької діяльності. " + regFromToStr +
+		"<br><br>Інформація надається станом на " + dateStr + "<br><br>"
 		);
 	//foot
 	document.write(
 		"<table width='100%'><tr><td align='left'><b>Начальник відділу<br>персоніфікованого обліку<br>інформаційних систем та мереж</b></td>" + 
-		"<td align='right' valign='bottom'><b>__________  &nbsp <p style='text-decoration:underline; display: inline'>/" + storage.boss + "/<br></p></b></td></tr>" +
-		"<tr><td align='left' valign='bottom'>Виконавець:</td><td align='right'>М.П.<br>__________  &nbsp " +
+		"<td align='right' valign='bottom'><b>__________  &nbsp <p style='text-decoration:underline; display: inline'>/" + storage.boss +
+		"/<br></p></b></td></tr><tr><td align='left' valign='bottom'>Виконавець:</td><td align='right'>М.П.<br>__________  &nbsp " +
 		"<p style='text-decoration:underline; display: inline'>/" + storage.operator + "/</p></td></tr></table>"
 	);
 	document.close();
-	return true;
+	return window.print();
 }
 
 

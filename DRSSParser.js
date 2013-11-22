@@ -10,6 +10,17 @@ var DRSS_URL = [
 	"http://172.1.4.196:7777/ikis/app/f?p=303"
 	];
 var currInQueue = null;
+var AdditionalInfo = {from: null, to: null};
+var regInfo = { id: null, fio: null, register: null, regFromTo: null };
+
+//locations by apex variable p_flow_step_id//
+var LOGIN_PAGE = 111;
+var MAIN_MENU  = 1000;
+var FIND_PAGE  = 1;
+var REG_COMMON_TAB = 120;
+var REG_ADDIT_TAB  = 126;
+var REG_MDZU_TAB   = 138;
+//////////////////////////////////////////////
 
 /**
  * Parser start her
@@ -34,19 +45,19 @@ var currInQueue = null;
 					return false;
 				} else stepId = stepId[0].value;
 				//Analize locations
-				switch (stepId) {
+				switch (parseInt(stepId)) {
 					//p_flow_step_id = 111 - Login page
-					case "111":
+					case LOGIN_PAGE:
 						console.log("DRSS parser: Location: login page, try login...");
 						DRSSLogin(storage);
 					break;
 					//p_flow_step_id = 1000 - Mainmenu page
-					case "1000":
+					case MAIN_MENU:
 						console.log("DRSS parser: Location Mainmenu page, try open find page...");
 						DRSSOpenFindPage(storage);
 					break;		
 					//p_flow_step_id = 1 - Find page
-					case "1":
+					case FIND_PAGE:
 						console.log("DRSS parser: Location DRSS Find page, try query by people...");
 						var regInfo = DRSSQueryDataByPeople(storage);
 						if (regInfo != null) {
@@ -55,12 +66,25 @@ var currInQueue = null;
 						}
 					break;
 					//p_flow_step_id = 120 - Advanced registration info page
-					case "120":
+					case REG_COMMON_TAB:
 						console.log("DRSS parser: Location DRSS advanced registration info page, parse...");
 						DRSSEnterToMDZU();
 					break;
+					//p_flow_step_id = 126 - Additional registration info page
+					case REG_ADDIT_TAB:
+						console.log("DRSS parser: Location DRSS advanced registration info page [Додатково], parse...");
+						AdditionalInfo.to = document.querySelector("#P126_IAB_STOP_DT").value;
+						var regInfo = { id: null, fio: null, register: null, regFromTo: null };
+						regInfo.id  = currInQueue.split(",")[0];
+						regInfo.fio = currInQueue.split(",")[1];
+						regInfo.register = !(AdditionalInfo.from.trim() == "");
+						regInfo.regFromTo = AdditionalInfo.from  + ";" + AdditionalInfo.to;
+						//try print data
+						DRSSPrint(regInfo, storage);
+						DRSSCommit(storage);
+					break;
 					//p_flow_step_id = 138 - Advanced registration info page [Дані МДЗУ]
-					case "138":
+					case REG_MDZU_TAB:
 						console.log("DRSS parser: Location DRSS advanced registration info page [Дані МДЗУ], parse...");
 						var regInfo = DRSSParseRegData();
 						if (regInfo != null) {
@@ -73,7 +97,7 @@ var currInQueue = null;
 						return false;
 					break;
 				}
-			} else console.log("DRSS parser ERROR: Extension DRSSRegConfirm not in status DRSSPrintING..."); 
+			} else console.log("DRSS parser ERROR: Extension DRSSRegConfirm not in status PRINTING..."); 
 		}
 	);
 } catch (e) {
@@ -87,19 +111,21 @@ var currInQueue = null;
 function DRSSCommit(storage) {
 	console.log("DRSS parser: All work done, update printQueueList, commit changes...");
 	try {
-		var number = storage.number + 1;
+		var number = parseInt(storage.number) + 1;
 		var printQueueList = storage.printQueueList.replace(currInQueue + ";", "");
 		var updateStorage = {
 			number: number,
 			printQueueList: printQueueList,
 			status: (printQueueList == "") ? WORK_STATUS.READY : WORK_STATUS.PRINTING
-		};
-		
-		chrome.storage.local.set(updateStorage,
+		};	
+		chrome.storage.local.set(
+			updateStorage,
 			function () {
 				if (chrome.runtime.lastError == null) { 
 					location.assign(DRSS_URL[storage.server]);
-					sendMessageToExtension({ text: MESSAGES.CLOSE_TAB });
+					 if (storage.printQueueList == "")
+						sendMessageToExtension({ text: MESSAGES.CLOSE_TAB });
+					sendMessageToExtension({ text: MESSAGES.UPDATE });
 				} else {
 					alert("DRSS parser: Ошибка при обновлении chrome.storage.local!");
 					return false;
@@ -132,7 +158,7 @@ function DRSSLogin(storage) {
 }
 
 /**
- * Open [Страхувальники (МДЗУ)] link from MainMenu DRSS
+ * Open [Страхувальники] link from MainMenu DRSS
  */
 function DRSSOpenFindPage(storage) {
 	var DRSSFindMenuItemValue = "Страхувальники";
@@ -163,7 +189,6 @@ function DRSSOpenFindPage(storage) {
  * Returned regInfo if data not found
  */
 function DRSSQueryDataByPeople(storage) {
-	var regInfo = { id: null, fio: null, register: null, regFromTo: null };
 	var idInput = document.querySelector("#P1_NUMID");
 	try {	
 		//prepare "not found" regInfo data
@@ -248,7 +273,7 @@ function DRSSQueryDataByPeople(storage) {
 			}
 		}
 	} catch (e) {
-		alert("Ошибочка вышла!\DRSSQueryDataByPeople(): " + e);
+		alert("Ошибочка вышла!\nDRSSQueryDataByPeople(): " + e);
 		return false;
 	}
 	return regInfo;
@@ -260,40 +285,46 @@ function DRSSQueryDataByPeople(storage) {
 function DRSSEnterToMDZU() {
 	var links = document.querySelectorAll("a");
 	var MDZUDataTitle = "Дані МДЗУ";
+	var AdditionalDataTititle = "Додатково";
 	var MDZUDataLink = null;
+	var AdditionalLink = null;
 	try {
 		for (var i = 0; i < links.length; i++) {
 			if (links[i].title.trim() == MDZUDataTitle) {
 				MDZUDataLink = links[i];
 				break;
 			}
+			if (links[i].title.trim() == AdditionalDataTititle) {
+				AdditionalLink = links[i];
+			}
 		}
 		if (MDZUDataLink != null) {
 			MDZUDataLink.click();
+			return true;
 		} else {
-			alert("Ошибочка вышла!\DRSSEnterToMDZU(): link to tab [MDZU] not finded");
+			if (AdditionalLink != null) {
+				console.log("DRSS parser: Try get no MDZU data registred from ...");
+				AdditionalInfo.from = document.querySelector("#P120_IM_DT_PSV").value;
+				console.log("DRSS parser: No MDZU data registred from = \"" + AdditionalInfo.from + "\"");
+				AdditionalLink.click();
+				return true;
+			}
+			alert("Ошибочка вышла!\nDRSSEnterToMDZU(): link to tab [MDZU] not finded!");
 			return false;
 		}
 	} catch (e) {
-		alert("Ошибочка вышла!\DRSSEnterToMDZU(): " + e);
+		alert("Ошибочка вышла!\nDRSSEnterToMDZU(): " + e);
 		return false;
 	}
 	return true;
 }
 
-/**
- * Entering to old PFU data tab
- */
-function DRSSEnterToPfu() {
-
-}
 
 /**
  * Parsing registration data on page
  * Returned regInfo object
  */
 function DRSSParseRegData() {
-	var regInfo = { id: null, fio: null, register: null, regFromTo: null };
 	var regFromInput = document.querySelector("#P138_IM_DT_PSV");
 	var regToInput = document.querySelector("#P138_IAB_STOP_DT");
 	try {
@@ -324,7 +355,10 @@ function DRSSParseRegData() {
 function DRSSPrint(regInfo, storage) {
 	console.log("DRSS parser: DRSSPrint(): regInfo = " + JSON.stringify(regInfo));
 	var isRegisterStr = (regInfo.register) ? "зареєстрований" : "не зареєстрований";
-	var regFromToStr  = (regInfo.register) ? regInfo.regFromTo : "";
+	var from = (regInfo.regFromTo != null) ? regInfo.regFromTo.split(";")[0] : "";
+	var to = (regInfo.regFromTo != null) ? regInfo.regFromTo.split(";")[1] : "";
+	var toStr = (to.trim() == "") ? " теперешній час " : to;
+	var regFromToStr  = (regInfo.regFromTo != null) ? " з " + from + " по " + toStr : "";
 	var d = new Date();
 	var dateStr = d.getDate() + "." + d.getMonth() + "." + d.getFullYear();
 	//head

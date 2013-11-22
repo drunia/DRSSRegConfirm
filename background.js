@@ -37,8 +37,13 @@ try {
 	 */
 	chrome.runtime.onMessage.addListener(
 		function (message, sender, sendResponce) {
+			//CLOSE_TAB MESSAGE
 			if (message.text == MESSAGES.CLOSE_TAB) {
 				chrome.tabs.remove(parsedTabId);
+			}
+			//UPDATE MESSAGE
+			if (message.text == MESSAGES.UPDATE) {
+				updateStatusIcon();
 			}
 			sendResponce( {text: "OK."} );
 		}

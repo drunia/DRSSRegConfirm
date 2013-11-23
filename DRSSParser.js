@@ -73,11 +73,12 @@ var REG_MDZU_TAB   = 138;
 					//p_flow_step_id = 126 - Additional registration info page
 					case REG_ADDIT_TAB:
 						console.log("DRSS parser: Location DRSS advanced registration info page [Додатково], parse...");
+						AdditionalInfo = storage.AdditionalInfo;
 						AdditionalInfo.to = document.querySelector("#P126_IAB_STOP_DT").value;
 						var regInfo = { id: null, fio: null, register: null, regFromTo: null };
 						regInfo.id  = currInQueue.split(",")[0];
 						regInfo.fio = currInQueue.split(",")[1];
-						regInfo.register = !(AdditionalInfo.from.trim() == "");
+						regInfo.register = !(AdditionalInfo.from == null || AdditionalInfo.from.trim() == "");
 						regInfo.regFromTo = AdditionalInfo.from  + ";" + AdditionalInfo.to;
 						//try print data
 						DRSSPrint(regInfo, storage);
@@ -123,7 +124,7 @@ function DRSSCommit(storage) {
 			function () {
 				if (chrome.runtime.lastError == null) { 
 					location.assign(DRSS_URL[storage.server]);
-					 if (storage.printQueueList == "")
+					 if (printQueueList == "")
 						sendMessageToExtension({ text: MESSAGES.CLOSE_TAB });
 					sendMessageToExtension({ text: MESSAGES.UPDATE });
 				} else {
@@ -211,7 +212,7 @@ function DRSSQueryDataByPeople(storage) {
 				var selRegionFilter = document.querySelector("#P1_OPFU_REG");
 				var selRaionFilter = document.querySelector("#P1_OPFU_DISTR");
 				selRegionFilter.selectedIndex = 0; //select "всі" 
-				selRaionFilter.selectedIndex = 0; //select "всі"
+				selRaionFilter.selectedIndex = 0;  //select "всі"
 				idInput.value = currInQueue.split(",")[0];
 				findButton.click();
 				console.log("DRSS parser: Query registration data...");
@@ -306,6 +307,10 @@ function DRSSEnterToMDZU() {
 				console.log("DRSS parser: Try get no MDZU data registred from ...");
 				AdditionalInfo.from = document.querySelector("#P120_IM_DT_PSV").value;
 				console.log("DRSS parser: No MDZU data registred from = \"" + AdditionalInfo.from + "\"");
+				//save additional info for get in next reload page
+				chrome.storage.local.set({ AdditionalInfo: AdditionalInfo }, function () {
+					console.log("DRSS parser: Additional info save is " + (chrome.runtime.lastError == null));
+				});
 				AdditionalLink.click();
 				return true;
 			}
@@ -354,6 +359,7 @@ function DRSSParseRegData() {
  */
 function DRSSPrint(regInfo, storage) {
 	console.log("DRSS parser: DRSSPrint(): regInfo = " + JSON.stringify(regInfo));
+	var w = window.open();
 	var isRegisterStr = (regInfo.register) ? "зареєстрований" : "не зареєстрований";
 	var from = (regInfo.regFromTo != null) ? regInfo.regFromTo.split(";")[0] : "";
 	var to = (regInfo.regFromTo != null) ? regInfo.regFromTo.split(";")[1] : "";
@@ -362,11 +368,12 @@ function DRSSPrint(regInfo, storage) {
 	var d = new Date();
 	var dateStr = d.getDate() + "." + d.getMonth() + "." + d.getFullYear();
 	//head
-	document.open("text/html","replace");
-	document.write("<h3 align='center'>Довiдка</h3>");
-	document.write("<h4 align='center'>№ " + storage.number + " від " + dateStr + "</h4><br>");
+	w.document.open("text/html","replace");
+	w.document.write("<title>" + regInfo.fio + "</title>");
+	w.document.write("<h3 align='center'>Довiдка</h3>");
+	w.document.write("<h4 align='center'>№ " + storage.number + " від " + dateStr + "</h4><br>");
 	//center
-	document.write(
+	w.document.write(
 		"Управлiння Пенсiйного фонду в " + storage.region.replace("ий", "ому") + " районі м. Харькова/Харькiвської областi " +
 		"повідомляє, що згідно данних Державного реєстру страхувальників Державного реєстру соціального " +
 		"страхування (РС ДРСС) гр. <b style='text-decoration:underline'>" + regInfo.fio + "</b>, ідентифікаційний код  " +
@@ -374,14 +381,14 @@ function DRSSPrint(regInfo, storage) {
 		"<br><br>Інформація надається станом на " + dateStr + "<br><br>"
 		);
 	//foot
-	document.write(
+	w.document.write(
 		"<table width='100%'><tr><td align='left'><b>Начальник відділу<br>персоніфікованого обліку<br>інформаційних систем та мереж</b></td>" + 
 		"<td align='right' valign='bottom'><b>__________  &nbsp <p style='text-decoration:underline; display: inline'>/" + storage.boss +
 		"/<br></p></b></td></tr><tr><td align='left' valign='bottom'>Виконавець:</td><td align='right'>М.П.<br>__________  &nbsp " +
 		"<p style='text-decoration:underline; display: inline'>/" + storage.operator + "/</p></td></tr></table>"
 	);
-	document.close();
-	return window.print();
+	w.document.close();
+	return true;
 }
 
 

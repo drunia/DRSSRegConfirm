@@ -5,7 +5,7 @@
 var VER = "Версия: " + chrome.runtime.getManifest().version;
 var DRSS_URL = [
 	"http://172.1.4.195:7777/ikis/app/f?p=303",
-	"http://172.1.4.196:7777/ikis/app/f?p=303"
+	"http://173.1.4.196:7777/ikis/app/f?p=303"
 	];
 var WORK_STATUS = { PRINTING: 1, READY: 2, ERROR: 3 };
 var MESSAGES = { CLOSE_TAB: 10, UPDATE: 20 };
@@ -88,15 +88,42 @@ function registerDRSSTabEvents(tabId) {
 	);
 	//Fired when tab updated
 	chrome.tabs.onUpdated.addListener(
-		function (id, updateInfo) {
-			if (tabId == id) {
-				if (updateInfo.status == "complete") {
+		function (id, updateInfo, tab) {
+		try{
+			if (tabId == id && updateInfo.status == "complete") {
+				if (tab.title.match(/К сожалению.*/)) {
+					//show notify error load url to user
+					var notifyID = "WAIT_NOTIFY";
+					var timer = 10;
+					var options = {
+						type:  "basic",
+						title: "Опаньки, приплыли ...",
+						iconUrl: "icon.png",
+						message: "Похоже, что ДРСС сейчас не доступен :(\n\n" +
+							"Не закрывайте вкладку, а я попробую перезагрузить ее через " + timer + " секунд..."
+					}
+					var notifyCallback = function () {}
+					var reloadTabFunc = function () {
+						options.message = "Похоже, что ДРСС сейчас не доступен :(\n\n" +
+							  "Не закрывайте вкладку, а я попробую перезагрузить ее через " + timer-- + " секунд...";
+						chrome.notifications.update(notifyID, options,  notifyCallback);
+						if (timer == 0) {
+							clearInterval(intervalID);
+							chrome.notifications.clear(notifyID, notifyCallback);
+							chrome.tabs.reload(tabId);
+						}
+					}
+					chrome.notifications.create(notifyID, options, notifyCallback);
+					var intervalID = setInterval(reloadTabFunc, 1000);
+				}
+				else
 					//injecting DRSS parse script into page
 					chrome.tabs.executeScript(
 						tabId, {file: "DRSSParser.js"}
 					);
-				}
 			}
+			
+			} catch (e) {alert(e)}
 		}
 	);
 	return true;

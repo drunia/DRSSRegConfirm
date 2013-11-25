@@ -123,7 +123,7 @@ function DRSSCommit(storage) {
 			function () {
 				if (chrome.runtime.lastError == null) { 
 					location.assign(DRSS_URL[storage.server]);
-					 if (storage.printQueueList == "")
+					 if (printQueueList == "")
 						sendMessageToExtension({ text: MESSAGES.CLOSE_TAB });
 					sendMessageToExtension({ text: MESSAGES.UPDATE });
 				} else {

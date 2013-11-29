@@ -1,0 +1,42 @@
+﻿<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8"/>
+		<script src="journal.js"></script>
+	</head>
+	<body>
+		<div id="filter">
+			Отображать записи за: 
+			<input type="date" id="datePicker">
+			<input type="image" src="print.png" id="printButton">
+			<br><span id="totalRecords" style="font-size: 12px"></span>
+		</div>
+		<br>
+		<h2 align="center">Графоформуюча таблиця «Журналу надання інформації з РС ДРСС»</h2>
+		<table id="queryTable" border="1" cellspacing="0" cellpadding="1" align="center">
+			<tr>
+				<td rowspan="2">№ п/п</td>
+				<td rowspan="2">дата отримання довідки</td>
+				<td colspan="2">Відомості про особу, на яку надається інформація</td>
+				<td rowspan="2">П.І.Б. спеціаліста відділу персоніфікованого обліку, що отримав довідку</td>
+				<td rowspan="2">Підпис</td>
+				<td rowspan="2">П.І.Б. спецаліста відділу призначення пенсій, що отримав заповнену довідку</td>
+				<td rowspan="2">Підпис</td>
+			</tr>
+			<tr>
+				<td>ідентифікаційний код</td>
+				<td>ПІБ</td>
+			</tr>
+			<tr id="dataRow">
+				<td id="numberColumn" width="80"></td>
+				<td id="recievedDateColumn" width="70"></td>
+				<td id="idcodeColumn" width="70"></td>
+				<td id="fioColumn" width="250"></td>
+				<td id="persOperatorColumn"  width="150"></td>
+				<td id="persSignatureColumn" width="70"></td>
+				<td id="pensOperatorColumn"  width="150"></td>
+				<td id="pensSignatureColumn" width="70"></td>
+			</tr>
+		</table>
+	</body>
+</html>

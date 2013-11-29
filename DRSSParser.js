@@ -4,14 +4,22 @@
  */
 
 var WORK_STATUS = { PRINTING: 1, READY: 2, ERROR: 3 };
-var MESSAGES = { CLOSE_TAB: 10, UPDATE: 20 };
 var DRSS_URL = [
 	"http://172.1.4.195:7777/ikis/app/f?p=303",
 	"http://172.1.4.196:7777/ikis/app/f?p=303"
 	];
 var currInQueue = null;
 var AdditionalInfo = {from: null, to: null};
-var regInfo = { id: null, fio: null, register: null, regFromTo: null };
+var regInfo = { 
+	id: null,
+	fio: null,
+	register: null,
+	regFromTo: null,
+	numb: 0,
+	operator: null,
+	boss: null,
+	region: null
+};
 
 //locations by apex variable p_flow_step_id//
 var LOGIN_PAGE = 111;
@@ -60,10 +68,7 @@ var REG_MDZU_TAB   = 138;
 					case FIND_PAGE:
 						console.log("DRSS parser: Location DRSS Find page, try query by people...");
 						var regInfo = DRSSQueryDataByPeople(storage);
-						if (regInfo != null) {
-							DRSSPrint(regInfo, storage);
-							DRSSCommit(storage);
-						}
+						if (regInfo != null) DRSSCommit(storage);
 					break;
 					//p_flow_step_id = 120 - Advanced registration info page
 					case REG_COMMON_TAB:
@@ -75,23 +80,22 @@ var REG_MDZU_TAB   = 138;
 						console.log("DRSS parser: Location DRSS advanced registration info page [Додатково], parse...");
 						AdditionalInfo = storage.AdditionalInfo;
 						AdditionalInfo.to = document.querySelector("#P126_IAB_STOP_DT").value;
-						var regInfo = { id: null, fio: null, register: null, regFromTo: null };
-						regInfo.id  = currInQueue.split(",")[0];
-						regInfo.fio = currInQueue.split(",")[1];
-						regInfo.register = !(AdditionalInfo.from == null || AdditionalInfo.from.trim() == "");
-						regInfo.regFromTo = AdditionalInfo.from  + ";" + AdditionalInfo.to;
+						window.regInfo.id  = currInQueue.split(",")[0];
+						window.regInfo.fio = currInQueue.split(",")[1];
+						window.regInfo.register = !(AdditionalInfo.from == null || AdditionalInfo.from.trim() == "");
+						window.regInfo.regFromTo = AdditionalInfo.from  + ";" + AdditionalInfo.to;
+						window.regInfo.numb = parseInt(storage.number);
+						window.regInfo.operator = storage.operator; 
+						window.regInfo.boss = storage.boss;
+						window.regInfo.region = storage.region;
 						//try print data
-						DRSSPrint(regInfo, storage);
 						DRSSCommit(storage);
 					break;
 					//p_flow_step_id = 138 - Advanced registration info page [Дані МДЗУ]
 					case REG_MDZU_TAB:
 						console.log("DRSS parser: Location DRSS advanced registration info page [Дані МДЗУ], parse...");
-						var regInfo = DRSSParseRegData();
-						if (regInfo != null) {
-							DRSSPrint(regInfo, storage);
-							DRSSCommit(storage);
-						}
+						var regInfo = DRSSParseRegData(storage);
+						if (regInfo != null) DRSSCommit(storage);
 					break;
 					default: 
 						console.log("DRSS parser: Unknown location (p_flow_step_id = " + stepId + "), STOP parse!");
@@ -118,28 +122,39 @@ function DRSSCommit(storage) {
 			number: number,
 			printQueueList: printQueueList,
 			status: (printQueueList == "") ? WORK_STATUS.READY : WORK_STATUS.PRINTING
-		};	
+		};
+		//Update journal
+		var message = {
+			text: "ADD_TO_DB",
+			regInfo: regInfo
+		}
+		sendMessageToExtension(message);
+		//Update storage
 		chrome.storage.local.set(
 			updateStorage,
 			function () {
 				if (chrome.runtime.lastError == null) { 
-					location.assign(DRSS_URL[storage.server]);
-					 if (printQueueList == "")
-						sendMessageToExtension({ text: MESSAGES.CLOSE_TAB });
-					sendMessageToExtension({ text: MESSAGES.UPDATE });
+					 if (printQueueList == "") 
+						sendMessageToExtension({ text: "CLOSE_TAB" });
+					 else 
+						location.assign(DRSS_URL[storage.server]);
+					sendMessageToExtension({ text: "UPDATE" });
 				} else {
-					alert("DRSS parser: Ошибка при обновлении chrome.storage.local!");
+					alert("DRSS parser: Ошибка при обновлении chrome.storage.local!\n" + chrome.runtime.lastError);
 					return false;
 				}
 			}
 		);
+		//Print current
+		sendMessageToExtension({text: "PRINT", regInfo: regInfo});
 	} catch (e) {
 		alert("Ошибочка вышла!\n" + e);
 		return false;
 	}
 	return true;
 }
- 
+
+
 /**
  * Login to DRSS 
  */
@@ -196,6 +211,10 @@ function DRSSQueryDataByPeople(storage) {
 		regInfo.id  = currInQueue.split(",")[0];
 		regInfo.fio = currInQueue.split(",")[1];
 		regInfo.register = false;
+		regInfo.numb = parseInt(storage.number);
+		regInfo.operator = storage.operator;
+		regInfo.boss = storage.boss;
+		regInfo.region = storage.region;
 		if (idInput.value == null || idInput.value.trim() == "") {
 			//step 1
 			console.log("DRSS parser: DRSS query data by people step 1...");
@@ -329,7 +348,7 @@ function DRSSEnterToMDZU() {
  * Parsing registration data on page
  * Returned regInfo object
  */
-function DRSSParseRegData() {
+function DRSSParseRegData(storage) {
 	var regFromInput = document.querySelector("#P138_IM_DT_PSV");
 	var regToInput = document.querySelector("#P138_IAB_STOP_DT");
 	try {
@@ -347,6 +366,10 @@ function DRSSParseRegData() {
 		regInfo.fio = currInQueue.split(",")[1];
 		regInfo.register = true;
 		regInfo.regFromTo = regFromInput.value + ";" + regToInput.value;
+		regInfo.numb = parseInt(storage.number);
+		regInfo.operator = storage.operator;
+		regInfo.boss = storage.boss;
+		regInfo.region = storage.region;
 	} catch (e) {
 		alert("Ошибочка вышла!\DRSSParseRegData(): " + e);
 		return null;
@@ -354,49 +377,12 @@ function DRSSParseRegData() {
 	return regInfo;
 }
 
-/**
- * Print in existig tab
- */
-function DRSSPrint(regInfo, storage) {
-	console.log("DRSS parser: DRSSPrint(): regInfo = " + JSON.stringify(regInfo));
-	var w = window.open();
-	var isRegisterStr = (regInfo.register) ? "зареєстрований" : "не зареєстрований";
-	var from = (regInfo.regFromTo != null) ? regInfo.regFromTo.split(";")[0] : "";
-	var to = (regInfo.regFromTo != null) ? regInfo.regFromTo.split(";")[1] : "";
-	var toStr = (to.trim() == "") ? " теперешній час " : to;
-	var regFromToStr  = (regInfo.regFromTo != null) ? " з " + from + " по " + toStr : "";
-	var d = new Date();
-	var dateStr = d.getDate() + "." + d.getMonth() + "." + d.getFullYear();
-	//head
-	w.document.open("text/html","replace");
-	w.document.write("<title>" + regInfo.fio + "</title>");
-	w.document.write("<h3 align='center'>Довiдка</h3>");
-	w.document.write("<h4 align='center'>№ " + storage.number + " від " + dateStr + "</h4><br>");
-	//center
-	w.document.write(
-		"Управлiння Пенсiйного фонду в " + storage.region.replace("ий", "ому") + " районі м. Харькова/Харькiвської областi " +
-		"повідомляє, що згідно данних Державного реєстру страхувальників Державного реєстру соціального " +
-		"страхування (РС ДРСС) гр. <b style='text-decoration:underline'>" + regInfo.fio + "</b>, ідентифікаційний код  " +
-		regInfo.id + " <b> " + isRegisterStr + "</b> як суб'єкт підприємницької діяльності. " + regFromToStr +
-		"<br><br>Інформація надається станом на " + dateStr + "<br><br>"
-		);
-	//foot
-	w.document.write(
-		"<table width='100%'><tr><td align='left'><b>Начальник відділу<br>персоніфікованого обліку<br>інформаційних систем та мереж</b></td>" + 
-		"<td align='right' valign='bottom'><b>__________  &nbsp <p style='text-decoration:underline; display: inline'>/" + storage.boss +
-		"/<br></p></b></td></tr><tr><td align='left' valign='bottom'>Виконавець:</td><td align='right'>М.П.<br>__________  &nbsp " +
-		"<p style='text-decoration:underline; display: inline'>/" + storage.operator + "/</p></td></tr></table>"
-	);
-	w.document.close();
-	return true;
-}
-
 
 /**
  * Send message to extension
  */
 function sendMessageToExtension(msg) {
-	console.log("DRSS parser: Send message to extension: " + msg); 
+	console.log("DRSS parser: Send message to extension: " + JSON.stringify(msg));
 	chrome.runtime.sendMessage(
 		msg,
 		function (response) {

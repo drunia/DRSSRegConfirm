@@ -9,6 +9,7 @@ var DRSS_URL = background.DRSS_URL;
 var WORK_STATUS = background.WORK_STATUS;
 var zoTable;
 var lastProgressState;
+var db = chrome.extension.getBackgroundPage().db;
 
 /**
  * Init point 
@@ -22,6 +23,7 @@ function initUI() {
 	zoTable = document.querySelector("#zoTable")
 	document.querySelector("#addButton").addEventListener("click", addToZoTable);
 	document.querySelector("#printButton").addEventListener("click", printAll);
+	document.querySelector("#journalButton").addEventListener("click", openJournal);
 	document.querySelector("#ver").innerHTML = VER;
 	//set 1 second update UI timeout
 	chrome.storage.local.get(
@@ -212,6 +214,13 @@ function printAll() {
 	);
 	return true;
 }
+ 
+ /**
+  * Build journal
+  */
+ function openJournal() {
+	window.open("journal.html");
+ }
  
 /**
  * Create notification to notificate user 

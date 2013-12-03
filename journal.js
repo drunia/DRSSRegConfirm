@@ -4,7 +4,13 @@
  */
  
 //Get initialized database object
-var db = chrome.extension.getBackgroundPage().db;
+var backPage = chrome.extension.getBackgroundPage();
+var db = backPage.db;
+var regColor = "#EFFBF2";
+var unRegColor = "#FBF8EF";
+ 
+//Import functions//
+var leadZeros = backPage.leadZeros;
  
 //Start when document loaded
 document.addEventListener("DOMContentLoaded", main);
@@ -13,15 +19,26 @@ document.addEventListener("DOMContentLoaded", main);
 function main() {
 	document.querySelector("#datePicker").addEventListener("change", filter);
 	document.querySelector("#printButton").addEventListener("click", printTable);
+	document.querySelector("#delAllButton").addEventListener("click", deleteJournal);
 	var now = new Date();
-	var today = now.getDate() + "." + (now.getMonth() + 1) + "." + now.getFullYear();
-	document.querySelector("#datePicker").value =
-		now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate();
+	var today = leadZeros(now.getDate(), 2) + "." + leadZeros((now.getMonth() + 1), 2) +
+		"." + now.getFullYear();
+	var todayByPicker = now.getFullYear() + "-" + leadZeros((now.getMonth() + 1), 2) +
+		"-" + leadZeros(now.getDate(), 2);
+	document.querySelector("#datePicker").value = todayByPicker
 	buildJournal(today);
  }
  
+//Delete all records from database
+function deleteJournal() {
+	if (!confirm("Вы уверены, что хотите удалить все записи с журнала?")) return fasle;
+	if (!confirm("Нет, Вы подумайте еще раз! Точно удалить все!?")) return fasle;
+	db.removeRecord("%", function() { location.reload(); });
+}
+ 
 //Build journal
 function buildJournal(date) {
+	console.log("DRSS Journal: Build journal by date: " + date);
 	var queryTable = document.querySelector("#queryTable");
 	var row = document.querySelector("#dataRow");
 	var records = 0;
@@ -38,6 +55,13 @@ function buildJournal(date) {
 				row.childNodes[5].innerHTML = r.rows.item(i).id_code;
 				row.childNodes[7].innerHTML = r.rows.item(i).fio;
 				row.childNodes[9].innerHTML = r.rows.item(i).operator;
+				var rowId = row.childNodes[row.childNodes.length-2].value = r.rows.item(i).rowid;
+				//Row color
+				if (r.rows.item(i).reg == "true") 
+					row.setAttribute("bgcolor", regColor);
+				else 
+					row.setAttribute("bgcolor", unRegColor);
+				//Clone row
 				var newRow = row.cloneNode(true);
 				queryTable.tBodies[0].appendChild(row);
 				row = newRow;
@@ -60,7 +84,7 @@ function buildJournal(date) {
 //datePicker onchange handler
 function filter() {
 	var d = new Date(this.value);
-	var date = d.getDate() + "." + (d.getMonth() + 1) + "." + d.getFullYear();
+	var date = leadZeros(d.getDate(), 2) + "." + leadZeros((d.getMonth() + 1), 2) + "." + d.getFullYear();
 	var queryTable = document.querySelector("#queryTable");
 	var row = document.querySelector("#dataRow").cloneNode(true);
 	//clear row data
@@ -72,7 +96,6 @@ function filter() {
 		queryTable.tBodies[0].removeChild(rows[i]);
 	//add first row
 	queryTable.tBodies[0].appendChild(row);
-	console.log("DRSS Journal: Filter by date: " + date);
 	if (this.validity.valid && this.value == "")
 		buildJournal(null);
 	else if (this.validity.valid) buildJournal(date);
@@ -95,14 +118,46 @@ function printTable() {
 
 //Delete record from db by row
 function deleteRecordByRow() {
-	var number = this.parentNode.parentNode.innerText.trim();
 	var row = this.parentNode.parentNode.parentNode;
-	if (!confirm("Удалить запись с номером " + number + "?")) return;
-	document.querySelector("#queryTable").tBodies[0].removeChild(row);
-	db.removeRecord(number);
-	
+	var number = row.childNodes[1].innerText.trim();
+	var rowId = row.childNodes[row.childNodes.length-2].value;
+	if (!confirm("Удалить запись с номером " + number + " ?")) return;
+	//Remove record by rowid
+	db.removeRecord(
+		rowId,
+		function() {
+			document.querySelector("#queryTable").tBodies[0].removeChild(row);
+			console.log("DRSS Database: Remove record by rowid " + rowId + " success.");
+		}
+	);
 }
 
 //Print reference by row
 function printReferenceByRow(){
+	var row = this.parentNode.parentNode.parentNode;
+	var rowId = row.childNodes[row.childNodes.length-2].value;
+	db.getRecords(
+		function(t, r) {
+			if (r.rows.length != 1) {
+				var errText = "Ошибочка вышла!\nНевозможно выбрать из БД запись под номером \"" +
+					numb + "\" для печати справки."; 
+				console.log(errText);
+				alert(errText);
+				return;
+			}
+			var dbRow = r.rows.item(0);
+			var regInfo = {
+				id: dbRow.id_code,
+				fio: dbRow.fio,
+				register: dbRow.reg,
+				regFromTo: dbRow.regfromto,
+				numb: dbRow.numb,
+				operator: dbRow.operator,
+				boss: dbRow.boss,
+				region: dbRow.region
+			}
+			backPage.DRSSPrint(regInfo);
+		}, null, rowId
+	);
 }
+

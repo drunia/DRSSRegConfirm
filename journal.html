@@ -3,12 +3,14 @@
 	<head>
 		<meta charset="UTF-8"/>
 		<script src="journal.js"></script>
+		<title>Журнал запросов ДРСС</title>
 	</head>
 	<body>
 		<div id="filter">
 			Отображать записи за: 
-			<input type="date" id="datePicker">
-			<input type="image" src="print.png" id="printButton">
+			<input type="date" id="datePicker" title="Выбрать дату, за которую отобразить записи">
+			<input type="image" src="print.png" id="printButton" style="vertical-align: bottom;" title="Печать журнала">
+			<input type="image" src="trash.png" id="delAllButton" style="float:right;" title="Удалить все записи с журнала">
 			<br><span id="totalRecords" style="font-size: 12px"></span>
 		</div>
 		<br>
@@ -36,6 +38,7 @@
 				<td id="persSignatureColumn" width="70"></td>
 				<td id="pensOperatorColumn"  width="150"></td>
 				<td id="pensSignatureColumn" width="70"></td>
+				<input type="hidden" id="rowId">
 			</tr>
 		</table>
 	</body>

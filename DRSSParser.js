@@ -25,9 +25,10 @@ var regInfo = {
 var LOGIN_PAGE = 111;
 var MAIN_MENU  = 1000;
 var FIND_PAGE  = 1;
-var REG_COMMON_TAB = 120;
-var REG_ADDIT_TAB  = 126;
-var REG_MDZU_TAB   = 138;
+var REG_COMMON_TAB  = 120;
+var REG_COMMON_TAB1 = 128;
+var REG_ADDIT_TAB   = 126;
+var REG_MDZU_TAB    = 138;
 //////////////////////////////////////////////
 
 /**
@@ -48,8 +49,10 @@ var REG_MDZU_TAB   = 138;
 				}
 				console.log("DRSS parser: Starting parse DRSS..."); 
 				var stepId = document.getElementsByName("p_flow_step_id");
-				if (stepId == null) {
+				if (stepId.length == 0) {
 					console.log("DRSS parser: Unknown location (p_flow_step_id == null), STOP parse!");
+					alert("Опа! Я куда то попало не туды :), если это страница типа \"Сервис временно не доступен\" и т.д.," +
+						"\nто попробуйте распечатать справки позднее, иначе сообщите разработчику об этом сообщении!");
 					return false;
 				} else stepId = stepId[0].value;
 				//Analize locations
@@ -72,6 +75,7 @@ var REG_MDZU_TAB   = 138;
 					break;
 					//p_flow_step_id = 120 - Advanced registration info page
 					case REG_COMMON_TAB:
+					case REG_COMMON_TAB1:
 						console.log("DRSS parser: Location DRSS advanced registration info page, parse...");
 						DRSSEnterToMDZU();
 					break;
@@ -99,6 +103,8 @@ var REG_MDZU_TAB   = 138;
 					break;
 					default: 
 						console.log("DRSS parser: Unknown location (p_flow_step_id = " + stepId + "), STOP parse!");
+						alert("Опа! Я куда то попало не туды :), если это страница типа \"Сервис временно не доступен\" и т.д.," +
+							"\nто попробуйте распечатать справки позднее, иначе сообщите разработчику об этом сообщении!");
 						return false;
 					break;
 				}

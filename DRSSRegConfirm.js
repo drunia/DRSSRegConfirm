@@ -179,7 +179,7 @@ function printAll() {
 		function (storage) {
 			var status = storage.status;
 			if (storage.user == null || storage.pass == null || storage.server == null) {
-				alert("Настройки не заданы!\nЗайдите в настройки и установите свой логин и пароль ДРСС");
+				alert("Настройки не заданы!\nЗайдите в настройки и установите свой логин и пароль ДРСС, а также остальные настройки...");
 				return false;
 			}
 			var printButton = document.querySelector("#printButton");
@@ -219,7 +219,7 @@ function printAll() {
   * Build journal
   */
  function openJournal() {
-	window.open("journal.html");
+	var w = window.open("journal.html");
  }
  
 /**

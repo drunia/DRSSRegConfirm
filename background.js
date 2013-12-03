@@ -91,7 +91,8 @@ var Database = function () {
 							var sql;
 							if (rs.rows.length == 0) { //ver 1
 								console.log("DRSS Database: Creating database... ");
-								sql = "CREATE TABLE journal (numb TEXT, id_code TEXT, fio TEXT, operator TEXT, date TEXT);";
+								sql = "CREATE TABLE journal (rowid INTEGER PRIMARY KEY AUTOINCREMENT, numb TEXT, id_code TEXT," +
+								" fio TEXT, operator TEXT, date TEXT, reg TEXT, regfromto TEXT, region TEXT, boss TEXT);";
 								t.executeSql(sql, [],
 									function() { console.log("DRSS Database: Table journal created OK."); },
 									errorHandler
@@ -127,9 +128,20 @@ var Database = function () {
 			function(t) {
 				console.log("DRSS Database: Try add data: " + JSON.stringify(regInfo));
 				var d = new Date();
-				var dataStr = d.getDate() + "." + (d.getMonth() + 1) + "." + d.getFullYear();
-				t.executeSql("INSERT INTO journal VALUES (?,?,?,?,?);",
-					[String(regInfo.numb), String(regInfo.id), regInfo.fio, regInfo.operator, String(dataStr)],
+				var dataStr = leadZeros(d.getDate(), 2) + "." + leadZeros((d.getMonth() + 1), 2) + "." + d.getFullYear();
+				t.executeSql("INSERT INTO journal (numb, id_code, fio, operator, date, " + 
+					" reg, regfromto, region, boss) VALUES (?,?,?,?,?,?,?,?,?);",
+					[
+						String(regInfo.numb),
+						String(regInfo.id),
+						regInfo.fio,
+						regInfo.operator,
+						String(dataStr),
+						regInfo.register,
+						regInfo.regFromTo, 
+						regInfo.region,
+						regInfo.boss
+					],
 					function(t, r) { console.log("DRSS Database: Data added OK."); },
 					errorHandler
 				);
@@ -138,24 +150,34 @@ var Database = function () {
 	}
 	
 	//Get records from db
-	//How can use: db.getRecords(function(t, r) {console.log("data length: " + r.rows.length;)})
-	this.getRecords = function(getRecordsHandler) {
-		console.log("DRSS Database: Try get data...");
+	//How can use: 
+	//db.getRecords(function(t, r) {console.log("data length: " + r.rows.length;)}); - All records
+	//db.getRecords(function(t, r) {console.log("data length: " + r.rows.length;)}, numb); - Records by number
+	//db.getRecords(function(t, r) {console.log("data length: " + r.rows.length;)}, null, rowId); - Records by rowId
+	this.getRecords = function(getRecordsHandler, number, rowId) {
+		console.log("DRSS Database: Try get records from db...");
 		this.db.transaction(function (t) {
-			t.executeSql("SELECT * FROM journal;", [],
-				getRecordsHandler, errorHandler
-			);
+			if (rowId != null) {
+				t.executeSql("SELECT * FROM journal WHERE rowid = ?;", [rowId],
+					getRecordsHandler, errorHandler
+				);
+			} else {
+				var numb = (number == null) ? "%" : String(number);
+				t.executeSql("SELECT * FROM journal WHERE numb LIKE ?;", [numb],
+					getRecordsHandler, errorHandler
+				);
+			}
 		});
 	}
 	
 	//Remove record from db
-	this.removeRecord = function(removeNumber) {
+	this.removeRecord = function(removeRowId, delfromUICallBack) {
 		this.db.transaction(
 			function(t) {
-				console.log("DRSS Database: Try remove record by number " + removeNumber);
+				console.log("DRSS Database: Try remove record by rowId " + removeRowId);
 				t.executeSql(
-					"DELETE FROM journal WHERE numb=?", [removeNumber],
-					function() {console.log("DRSS Database: Remove execSQL OK.")} , errorHandler
+					"DELETE FROM journal WHERE rowid LIKE ?", [removeRowId],
+					delfromUICallBack , errorHandler
 				);
 			}
 		);
@@ -194,21 +216,24 @@ function DRSSPrint(regInfo) {
 	var from = (regInfo.regFromTo != null) ? regInfo.regFromTo.split(";")[0] : "";
 	var to = (regInfo.regFromTo != null) ? regInfo.regFromTo.split(";")[1] : "";
 	var toStr = (to.trim() == "") ? " теперешній час " : to;
-	var regFromToStr  = (regInfo.regFromTo != null) ? " з " + from + " по " + toStr : "";
+	var regFromToStr  = (regInfo.regFromTo != null) ? " з: <span style='text-decoration:underline'>" + from +
+		" </span>  по: <span style='text-decoration:underline'>" + toStr  + "</span> " : "";
 	var d = new Date();
 	var dateStr = d.getDate() + "." + (d.getMonth() + 1) + "." + d.getFullYear();
 	//head
 	w.document.open("text/html","replace");
 	w.document.write("<title>" + regInfo.fio + "</title>");
 	w.document.write("<h3 align='center'>Довiдка</h3>");
-	w.document.write("<h4 align='center'>№ " + regInfo.numb + " від " + dateStr + "</h4><br>");
+	w.document.write("<h4 align='center'>№ <span style='text-decoration:underline'> &nbsp " +
+		regInfo.numb + " &nbsp </span> від <span style='text-decoration:underline'>&nbsp " + dateStr + " &nbsp </span></h4><br>");
 	//center
 	w.document.write(
-		"Управлiння Пенсiйного фонду в " + regInfo.region.replace("ий", "ому") + " районі м. Харькова/Харькiвської областi " +
-		"повідомляє, що згідно данних Державного реєстру страхувальників Державного реєстру соціального " +
-		"страхування (РС ДРСС) гр. <b style='text-decoration:underline'>" + regInfo.fio + "</b>, ідентифікаційний код  " +
-		regInfo.id + " <b> " + isRegisterStr + "</b> як суб'єкт підприємницької діяльності. " + regFromToStr +
-		"<br><br>Інформація надається станом на " + dateStr + "<br><br>"
+		"Управлiння Пенсiйного фонду в <span style='text-decoration:underline'>" + regInfo.region.replace("ий", "ому") +
+		"</span> районі м. Харькова/Харькiвської областi повідомляє, що згідно данних Державного реєстру страхувальників " + 
+		"Державного реєстру соціального страхування (РС ДРСС) гр. <b style='text-decoration:underline'>" + regInfo.fio +
+		"</b>, ідентифікаційний код  <span style='text-decoration:underline'>" + regInfo.id + " </span> <b> " +
+		isRegisterStr + "</b> як суб'єкт підприємницької діяльності.  <nobr>" + regFromToStr +
+		"</nobr><br><br>Інформація надається станом на <span style='text-decoration:underline'>" + dateStr + "</span> р.<br><br>"
 		);
 	//foot
 	w.document.write(
@@ -243,28 +268,12 @@ function registerDRSSTabEvents(tabId) {
 			if (tabId == id && updateInfo.status == "complete") {
 				if (tab.title.match(/К сожалению.*/)) {
 					//show notify error load url to user
-					var notifyID = "WAIT_NOTIFY";
-					var timer = 10;
-					var options = {
-						type:  "basic",
-						title: "Опаньки, приплыли ...",
-						iconUrl: "icon.png",
-						message: "Похоже, что ДРСС сейчас не доступен :(\n\n" +
-							"Не закрывайте вкладку, а я попробую перезагрузить ее через " + timer + " секунд..."
-					}
-					var notifyCallback = function () {}
-					var reloadTabFunc = function () {
-						options.message = "Похоже, что ДРСС сейчас не доступен :(\n\n" +
-							  "Не закрывайте вкладку, а я попробую перезагрузить ее через " + timer-- + " секунд...";
-						chrome.notifications.update(notifyID, options,  notifyCallback);
-						if (timer == 0) {
-							clearInterval(intervalID);
-							chrome.notifications.clear(notifyID, notifyCallback);
-							chrome.tabs.reload(tabId);
-						}
-					}
-					chrome.notifications.create(notifyID, options, notifyCallback);
-					var intervalID = setInterval(reloadTabFunc, 1000);
+					var title = "Опаньки, приплыли ...";
+					var msg = "Похоже, что ДРСС сейчас не доступен :(\n\n" +
+						"Не закрывайте вкладку, а я попробую перезагрузить ее через  несколько секунд ";
+					var updateSecCount = 10;
+					var icon = "icon.png";
+					showNotify(title, msg, updateSecCount, icon, tabId)
 				}
 				else
 					//injecting DRSS parse script into page
@@ -278,3 +287,39 @@ function registerDRSSTabEvents(tabId) {
 	);
 	return true;
  }
+ 
+//Show notification to user
+//title - title of notify window 
+//msg - message of notify window
+//updateSecCount - Total count updates notify
+//icon - icon of notify window
+function showNotify(title, msg, updateSecCount, icon, tabId) {
+	var notifyID = "WAIT_NOTIFY";
+	var timer = updateSecCount;
+	var options = {
+		type:  "basic",
+		title: title,
+		iconUrl: icon,
+		message: msg
+	}
+	var wasUpdatedCb = function(wasUpdated) { console.log("DRSS background: showNotify(): updated!"); };
+	var reloadTabFunc = function () {
+		options.message += " ."; timer--;
+		chrome.notifications.update(notifyID, options, wasUpdatedCb);
+		if (timer == 0) {
+			clearInterval(intervalID);
+			chrome.notifications.clear(notifyID, wasUpdatedCb);
+			chrome.tabs.reload(tabId);
+		}
+	}
+	chrome.notifications.create(notifyID, options, wasUpdatedCb);
+	var intervalID = setInterval(reloadTabFunc, 1000);		
+}
+ 
+ //Add to value count lead zeros
+function leadZeros(value, count) {
+	var value = String(value);
+	var zeros = "";
+	for (var i = 0; i < (count - value.length); i++) zeros += "0";
+	return zeros + value;
+}

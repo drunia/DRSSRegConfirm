@@ -68,7 +68,7 @@ function addToZoTable() {
 			var printQueueList = storage.printQueueList;
 			var printQueueListOld = printQueueList;
 			if (printQueueList == null) printQueueList = "";
-			if (!(String(idCode).match(/[0-9]{10}/) &&
+			if (!(String(idCode).match(/[А-Яа-яІЇіїєЄ]{4}[0-9]{6}|[0-9]{10}/) &&
 				  String(fio).match(/.+\s.+\s.+/))) {
 				alert("Одно из полей заполнено не верно!\n\n" + 
 					"Ид. код: XXXXXXXXXX - где Х цифра от 0-9\n" +

@@ -363,10 +363,8 @@ function DRSSParseRegData(storage) {
 			return null;
 		}
 		if (regToInput != null && regToInput.value.trim() == "") {
-			console.log("DRSS parser: DRSSParseRegData(): regTo data not found!");
-			var d = new Date();
-			var dateStr = d.getDate() + "." + d.getMonth() + "." + d.getFullYear();
-			regToInput.value = dateStr;
+			console.log("DRSS parser: DRSSParseRegData(): regTo data not found! Registered now.");
+			regToInput.value = "";
 		}
 		regInfo.id  = currInQueue.split(",")[0];
 		regInfo.fio = currInQueue.split(",")[1];
